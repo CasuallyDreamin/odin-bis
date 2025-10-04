@@ -1,7 +1,9 @@
-const http = require("http");
+const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const url = require("url");
+
+const app = express();
 
 const PORT = 5000;
 
@@ -18,48 +20,33 @@ function serveFile(res, filename, contentType) {
   });
 }
 
-const server = http.createServer((req, res) => {
-  const parsedURL = url.parse(req.url, true);
-  const pathname = parsedURL.pathname;
-  const method = req.method;
+app.use(express.static(path.join(__dirname, 'public')));
 
-  // --- Handle static files like CSS, JS, images ---
-  const ext = path.extname(pathname);
-  if (ext) {
-    let contentType = "text/plain";
-    switch (ext) {
-      case ".css":
-        contentType = "text/css";
-        break;
-      case ".js":
-        contentType = "application/javascript";
-        break;
-      case ".png":
-        contentType = "image/png";
-        break;
-      case ".jpg":
-      case ".jpeg":
-        contentType = "image/jpeg";
-        break;
-      case ".html":
-        contentType = "text/html";
-        break;
-    }
-    return serveFile(res, pathname, contentType);
-  }
-
-  // --- HTML routes ---
-  if (pathname === "/" && method === "GET") {
-    serveFile(res, "index.html", "text/html");
-  } else if (pathname === "/about" && method === "GET") {
-    serveFile(res, "about.html", "text/html");
-  } else if (pathname === "/contact" && method === "GET") {
-    serveFile(res, "contact.html", "text/html");
-  } else {
-    serveFile(res, "404.html", "text/html");
-  }
+app.get("/", (req, res) => {
+  serveFile(res, "index.html", "text/html");
 });
 
-server.listen(PORT, () => {
+app.get("/script.js", (req, res) => {
+  serveFile(res, "script.js", "application/javascript");
+});
+
+app.get("/about", (req, res) => {
+  serveFile(res, "about.html", "text/html");
+});
+
+app.get("/contact", (req, res) => {
+  serveFile(res, "contact.html", "text/html");
+});
+
+app.use((req, res) => {
+  res.writeHead(404, { "Content-Type": "text/plain" });
+  res.end("404 Not Found");
+});
+
+app.listen(PORT, (error) => {
+
+  if(error) {
+    return console.log('Error occurred: ', error);
+  }
   console.log(`Server is running at http://localhost:${PORT}`);
 });
